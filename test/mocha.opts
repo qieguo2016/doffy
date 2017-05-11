@@ -1,0 +1,6 @@
+--recursive
+--async-only
+--growl
+--trace-deprecation
+--compilers js:babel-core/register
+-t 100000

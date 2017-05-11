@@ -1,0 +1,12 @@
+{
+	"presets": [
+		["env", {
+			"targets": {
+				"node": "current"
+			}
+		}]
+	],
+	"plugins": [
+		// this is all transforms in babel-preset-es2015,
+	]
+}
