@@ -1,5 +1,7 @@
 # doffy
 
+[![CircleCI](https://img.shields.io/circleci/project/qieguo2016/doffy.svg)](https://github.com/qieguo2016/doffy) [![GitHub stars](https://img.shields.io/github/stars/qieguo2016/doffy.svg)](https://github.com/qieguo2016/doffy/stargazers) [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/qieguo2016/doffy/master/LICENSE)
+
 > `Doffy` a headless browser automation library with easy-use API. 
 
 Doffy provide a few simple methods to simulate user action like `goto` `click` `fill`, which are useful for `headless web testing` and `crawling`.
