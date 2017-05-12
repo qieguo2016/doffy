@@ -6,16 +6,6 @@
 
 /**
  * All promise!
- *
- * 记录
- *
- * 执行命令的两种思路: 1）往chrome remote page注入一个js脚本，然后在测试脚本中调用这个js脚本的方法来实现网页操作
- *                   2）调用client的runtime/DOM/CSS等各种接口来实现，主要使用runtime实现
- *
- * wait方法实现：1）粗暴地轮询，参考Casper的实现
- *              2）根据wait的对象特性，由目标触发的事件来操作，如监听dom的属性变化事件，dom的结构变化，network的回包（responseReceived => getResponseBody）。
- *
- * inject js脚本
  */
 
 const EventEmitter = require('events');
@@ -83,7 +73,6 @@ class Doffy extends EventEmitter {
           self.action(name, fn);
         });
 
-        console.log('======== doffy init success ========');
         fulfill(self);
       }).on('error', (err) => {
         // cannot connect to the remote endpoint
@@ -109,7 +98,6 @@ class Doffy extends EventEmitter {
   end(exit = false) {
     try {
       this.client.close();
-      console.log('======== doffy end success  ========');
       exit && this.chromeLauncher.kill('SIGHUP');
     } catch(err) {
       Promise.reject(err);

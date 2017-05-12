@@ -5,5 +5,4 @@
 *.log*
 
 node_modules
-backup
-screenshot
+temp

@@ -1,8 +1,17 @@
 {
   "name": "Doffy",
-  "version": "1.0.0",
-  "description": "A light auto-test lib for chrome headless",
-  "main": "doffy.js",
+  "version": "0.0.1",
+  "description": "a headless browser automation library with easy-use API",
+  "main": "doffy",
+  "scripts": {
+    "build": "babel src -d lib",
+    "eslint": "eslint src/*; exit 0",
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/qieguo2016/doffy.git"
+  },
   "dependencies": {
     "chrome-remote-interface": "^0.22.0",
     "lighthouse": "^1.6.5"
@@ -10,10 +19,10 @@
   "devDependencies": {
     "babel-cli": "^6.18.0",
     "babel-core": "^6.20.0",
+    "babel-eslint": "^7.2.2",
     "babel-loader": "^6.2.8",
     "babel-polyfill": "^6.0.16",
     "babel-preset-env": "^1.1.4",
-    "babel-eslint": "^7.2.2",
     "chai": "^1.9.1",
     "eslint": "^3.12.2",
     "eslint-config-airbnb": "^14.0.0",
@@ -22,12 +31,16 @@
     "eslint-plugin-react": "^6.8.0",
     "mocha": "^3.3.0"
   },
-  "scripts": {
-    "dev": "babel-node",
-    "build": "babel src -d lib",
-    "eslint": "eslint src/*; exit 0",
-    "test": "mocha"
+  "keywords": [
+    "headless",
+    "framework",
+    "test",
+    "ui",
+    "crawling"
+  ],
+  "author": {
+    "name": "qieguo",
+    "email": "qieguo.chow@gmail.com"
   },
-  "author": "qieguo",
   "license": "MIT"
 }
