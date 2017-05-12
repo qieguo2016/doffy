@@ -1,0 +1,14 @@
+dependencies:
+  pre:
+    - npm config set "//registry.npmjs.org/:_authToken" $NPM_TOKEN
+    - nvm install 6;
+
+test:
+  override:
+    - nvm use 6 && npm run build
+
+deployment:
+  npm:
+    tag: /v[0-9]+(\.[0-9]+)*/
+    commands:
+      - npm publish
