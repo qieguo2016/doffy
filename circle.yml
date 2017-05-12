@@ -2,6 +2,7 @@ dependencies:
   pre:
     - npm config set "//registry.npmjs.org/:_authToken" $NPM_TOKEN
     - nvm install 6;
+    - npm install;
 
 test:
   override:
