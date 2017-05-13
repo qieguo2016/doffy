@@ -10,16 +10,15 @@ const doffy = new Doffy();
 
 (async() => {
   await doffy.init();
-  await doffy.goto('https://github.com/qieguo2016/doffy');
-  await doffy.click('[title="Star qieguo2016/doffy"]');
-  await doffy.screenshot('doffy.jpeg');
-  await doffy.wait(1000);
-  await doffy.goto('https://www.baidu.com');
-  await doffy.fill('#kw', 'github');
-  await doffy.click('#su');
-  let hasResult = await doffy.visible('.result')
-  hasResult && console.log('======== search success ========');
-  await doffy.screenshot('temp/search.jpeg');
+  await doffy.goto('https://github.com/login');
+  await doffy.screenshot('result/01-homepage.jpeg');
+  await doffy.fill('#login_field', 'doffyjs');
+  await doffy.fill('#password', 'doffy2017');
+  await doffy.screenshot('result/02-fillaccount.jpeg');
+  await doffy.click('[name="commit"]');
+  await doffy.wait('.avatar');
+  let isLogin = await doffy.visible('.avatar')
+  isLogin && console.log('======== login success ========');
   await doffy.end(true);
 })();
 

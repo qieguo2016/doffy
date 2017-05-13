@@ -45,23 +45,19 @@ sudo apt-get install -f
 
 ```js
 import Doffy from '../src/doffy';
-
 const doffy = new Doffy();
-const domain = 'https://www.baidu.com';
 
 (async() => {
   await doffy.init();
-  await doffy.goto(domain);
-  await doffy.click('.signin-show');
-  await doffy.click('.btn-email');
-  await doffy.fill('.field .account', '@.com');
-  await doffy.fill('.field .password', '123123');
-  await doffy.click('div.sign-in-container > div.btn');
-  await doffy.wait('.user-action img');
-  await doffy.wait(1000);
-  let isLogin = await doffy.visible('.user-action img')
+  await doffy.goto('https://github.com/login');
+  await doffy.screenshot('result/01-homepage.jpeg');
+  await doffy.fill('#login_field', 'doffyjs');
+  await doffy.fill('#password', 'doffy2017');
+  await doffy.screenshot('result/02-fillaccount.jpeg');
+  await doffy.click('[name="commit"]');
+  await doffy.wait('.avatar');
+  let isLogin = await doffy.visible('.avatar')
   isLogin && console.log('======== login success ========');
-  await doffy.screenshot('screenshot/auto.jpeg');
   await doffy.end(true);
 })();
 ```
@@ -69,11 +65,10 @@ const domain = 'https://www.baidu.com';
 ### run mocha test
 
 ```js
-import Doffy from '../../src/doffy';
+import Doffy from '../src/doffy';
 
 const expect = require('chai').expect;
 const doffy = new Doffy();
-const domain = 'https://www.baidu.com';
 
 describe('test example', function() {
 
@@ -93,35 +88,20 @@ describe('test example', function() {
   });
 
   it('open home page', async function() {
-    await doffy.goto(domain);
+    await doffy.goto('https://www.baidu.com');
     let ret = await doffy.title();
-    expect(ret.result.value).to.be.equal(" - Top Video, GIFs, TV, News");
-    await doffy.screenshot('screenshot/01.jpeg');
+    expect(ret.result.value).to.be.equal("百度一下，你就知道");
+    await doffy.screenshot('temp/01.jpeg');
   });
 
   it('open signin dialog', async function() {
-    await doffy.click('.signin-show');
-    let ret = await doffy.exist('.modal-show .sign-in-container');
-    expect(ret.result.value).to.be.equal(true);
-    await doffy.screenshot('screenshot/02.jpeg');
-  });
-
-  it('fill account and password', async function() {
-    await doffy.click('.btn-email');
-    await doffy.fill('.field .account', '@.com');
-    await doffy.fill('.field .password', '');
-    await doffy.screenshot('screenshot/03.jpeg');
-    let ret = await doffy.exist('.field .popover.right-tip-popover');
-    expect(ret.result.value).to.be.equal(false);
-  });
-
-  it('signin', async function() {
-    await doffy.click('div.sign-in-container > div.btn');
-    await doffy.wait('.user-action img');
-    await doffy.wait(1000);
-    await doffy.screenshot('screenshot/04.jpeg');
-    let ret = await doffy.visible('.user-action img')
-    expect(ret.result.value).to.be.equal(true);
+    await doffy.fill('#kw', 'github');
+    await doffy.click('#su');
+    let firstResult = await doffy.evaluate(() => {
+      return document.querySelectorAll('.result h3')[0].innerText;
+    });
+    expect(firstResult).to.be.equal('GitHub · Build software better, together.官网');
+    await doffy.screenshot('temp/02.jpeg');
   });
 
 });
