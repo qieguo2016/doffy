@@ -1,6 +1,6 @@
 {
   "name": "doffy",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "a headless browser automation library with easy-use API",
   "main": "doffy",
   "scripts": {
@@ -41,6 +41,8 @@
     "ui",
     "crawling"
   ],
-  "engines" : { "node" : ">=6" },
+  "engines": {
+    "node": ">=6"
+  },
   "license": "MIT"
 }
