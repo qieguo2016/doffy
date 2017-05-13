@@ -7,6 +7,7 @@
 const fs = require('fs');
 const path = require('path');
 const util = require('./util');
+const events = require('./events');
 const checkDoffy = util.checkDoffy;
 
 // args should not contain function
@@ -19,90 +20,6 @@ exports.evaluate = function evaluate(fn, ...args) {
   return this.client.Runtime.evaluate({
     expression: exp
   });
-};
-
-exports.goto = function(url, opt) {
-  checkDoffy(this);
-  opt = Object.assign({ wait: true }, opt);
-  return new Promise((resolve, reject) => {
-    const listener = () => {
-      this.removeListener('pageLoaded', listener);
-      resolve(true);
-    };
-    this.client.Page.navigate({ url }).then(() => {
-      opt.wait && this.on('pageLoaded', listener);
-    }).catch(reject);
-  });
-};
-
-exports.title = function title() {
-  return this.evaluate(() => document.title);
-};
-
-exports.click = function click(selector) {
-  checkDoffy(this);
-  return this.client.Runtime.evaluate({
-    expression: `document.querySelector(\`${selector}\`).click()`
-  });
-};
-
-exports.screenshot = function(filename) {
-  checkDoffy(this);
-  filename = filename || `screenshot-${Date.now()}.${this.options.screenshotFormat}`;
-  return new Promise(async(resolve, reject) => {
-    if(!/(\.png$)|(\.jpe?g$)/.test(filename)) {
-      reject(new Error('screenshot should be file of png/jpg/jpeg'));
-    }
-    this.client.Page.captureScreenshot({
-      format: this.options.screenshotFormat,
-      quality: this.options.screenshotQuality,  // jpeg only
-      fromSurface: true  // fromSurface is MUST on Mac
-    }).then((img) => {
-      fs.writeFile(filename, img.data, 'base64',
-        (err) => {
-          !!err && reject(err);
-          resolve(true);
-        }
-      );
-    }).catch(reject);
-  });
-};
-
-exports.exist = function exist(selector) {
-  return this.evaluate(selector => !!document.querySelector(selector), selector);
-};
-
-exports.visible = function visible(selector) {
-  return this.evaluate((selector) => {
-    const el = document.querySelector(selector);
-    let style;
-    try {
-      style = window.getComputedStyle(el, null);
-    } catch(e) {
-      return false;
-    }
-    if(style.visibility === 'hidden' || style.display === 'none') {
-      return false;
-    }
-    if(style.display === 'inline' || style.display === 'inline-block') {
-      return true;
-    }
-    return el.clientHeight > 0 && el.clientWidth > 0;
-  }, selector);
-};
-
-exports.wait = function wait(param, opt) {
-  checkDoffy(this);
-  opt = opt || {};
-  if(typeof param === 'number') {
-    return util.sleep(param);
-  }
-  if(typeof param === 'string') {
-    return waitEl.call(this, param, opt);
-  }
-  if(typeof param === 'function') {
-    return waitFn.call(this, param, opt);
-  }
 };
 
 /**
@@ -191,9 +108,81 @@ function waitFn(fn, opt) {
   });
 }
 
-function waitHttp() {
+exports.wait = function wait(param, opt) {
+  checkDoffy(this);
+  opt = opt || {};
+  if(typeof param === 'number') {
+    return util.sleep(param);
+  }
+  if(typeof param === 'string') {
+    return waitEl.call(this, param, opt);
+  }
+  if(typeof param === 'function') {
+    return waitFn.call(this, param, opt);
+  }
+};
 
-}
+exports.screenshot = function(filename) {
+  checkDoffy(this);
+  filename = filename || `screenshot-${Date.now()}.${this.options.screenshotFormat}`;
+  return new Promise(async(resolve, reject) => {
+    if(!/(\.png$)|(\.jpe?g$)/.test(filename)) {
+      reject(new Error('screenshot should be file of png/jpg/jpeg'));
+    }
+    try {
+      const img = await this.client.Page.captureScreenshot({
+        format: this.options.screenshotFormat,
+        quality: this.options.screenshotQuality,  // jpeg only
+        fromSurface: true  // fromSurface is MUST on Mac
+      });
+      fs.writeFile(filename, img.data, 'base64', (err) => {
+        if(err) {
+          if(err.code === 'ENOENT') {
+            fs.mkdirSync(path.dirname(filename));
+            fs.writeFile(filename, img.data, 'base64', (err) => {
+              !!err && reject(new Error(`unable to save screenshot to ${filename}`));
+              resolve(true);
+            });
+          } else {
+            reject(new Error(`unable to save screenshot to ${filename}`));
+          }
+        } else {
+          resolve(true);
+        }
+      });
+    } catch(err) {
+      reject(new Error(`unable to save screenshot to ${filename}`));
+    }
+  });
+};
+
+exports.goto = function(url, opt) {
+  checkDoffy(this);
+  opt = Object.assign({ wait: true }, opt);
+  if(opt.wait) {
+    return new Promise((resolve, reject) => {
+      const listener = () => {
+        this.removeListener(events.pageLoaded, listener);
+        resolve(true);
+      };
+      this.client.Page.navigate({ url }).then(() => {
+        this.on(events.pageLoaded, listener);
+      }).catch(reject);
+    });
+  }
+  return this.client.Page.navigate({ url });
+};
+
+exports.title = function title() {
+  return this.evaluate(() => document.title);
+};
+
+exports.click = function click(selector) {
+  checkDoffy(this);
+  return this.client.Runtime.evaluate({
+    expression: `document.querySelector(\`${selector}\`).click()`
+  });
+};
 
 exports.fill = function(selector, value, opt) {
   opt = opt || {};
@@ -231,6 +220,57 @@ exports.fill = function(selector, value, opt) {
   });
 };
 
+// recommend use fill at first
+exports.sendkeys = function(keys, opt) {
+  checkDoffy(this);
+  if(typeof keys === 'string') {
+    return new Promise(async(resolve, reject) => {
+      try {
+        for(let i = 0, key; i < keys.length; i++) {
+          key = Object.assign({
+            type: 'char',
+            text: keys[i]
+          }, opt)
+          await this.client.Input.dispatchKeyEvent(key);
+        }
+        resolve(true);
+      } catch(err) {
+        reject(err);
+      }
+    });
+  }
+  if(typeof keys === 'object') {
+    return this.client.Input.dispatchKeyEvent(keys);
+  }
+  return Promise.reject(new Error('sendKeys param should be string or key object.'));
+}
+
+exports.exist = function exist(selector) {
+  return this.evaluate(selector => !!document.querySelector(selector), selector);
+};
+
+exports.visible = function visible(selector) {
+  return this.evaluate((selector) => {
+    const el = document.querySelector(selector);
+    let style;
+    try {
+      style = window.getComputedStyle(el, null);
+    } catch(e) {
+      return false;
+    }
+    if(style.visibility === 'hidden' || style.display === 'none') {
+      return false;
+    }
+    if(style.display === 'inline' || style.display === 'inline-block') {
+      return true;
+    }
+    return el.clientHeight > 0 && el.clientWidth > 0;
+  }, selector);
+};
+
+/**
+ * chrome method，different from browse method
+ */
 exports.querySelector = function(selector) {
   checkDoffy(this);
   const { DOM } = this.client;
@@ -279,20 +319,8 @@ exports.setNodeValue = function(selector, value) {
   });
 };
 
-exports.focus = function(selector) {
-  return new Promise(async(resolve, reject) => {
-    try {
-      const node = await this.querySelector(selector);
-      const ret = await this.client.DOM.focus({ nodeId: node.nodeId });
-      resolve(ret);
-    } catch(e) {
-      reject(new Error(`can not focus to ${selector}`, e));
-    }
-  });
-};
-
 /**
- * active, focus, hover, visited.
+ * setPseudoClass: active, hover, visited. focus is different
  */
 exports.setPseudoClass = function(nodeId, cls) {
   checkDoffy(this);
@@ -337,3 +365,44 @@ exports.visited = function(selector) {
     }
   });
 };
+
+exports.focus = function(selector) {
+  return new Promise(async(resolve, reject) => {
+    try {
+      const node = await this.querySelector(selector);
+      const ret = await this.client.DOM.focus({ nodeId: node.nodeId });
+      resolve(ret);
+    } catch(e) {
+      reject(new Error(`can not focus to ${selector}`, e));
+    }
+  });
+};
+
+exports.getResponse = function(query) {
+  checkDoffy(this);
+  const { Network } = this.client;
+  const list = this._request.quene;
+  const target = list.map((req) => {
+    if(typeof query === 'function') {
+      return query(req.request);
+    } else if(query instanceof RegExp) {
+      return query.test(req.request.url)
+    } else if(typeof query === 'string') {
+      return req.request.url.indexOf(query) > -1;
+    }
+  });
+  let result;
+  let ret;
+  return new Promise(async(resolve, reject) => {
+    try {
+      for(let i = 0; i < target.length; i++) {
+        ret = await Network.getResponseBody(target[i]);
+        result.push(ret);
+      }
+      resolve(result);
+    } catch(err) {
+      reject(err);
+    }
+  });
+};
+

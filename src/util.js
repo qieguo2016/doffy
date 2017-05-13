@@ -29,3 +29,27 @@ exports.bindMethods = function(methods, obj) {
 exports.sleep = function(time) {
   return new Promise(resolve => setTimeout(resolve, time));
 };
+
+exports.Quene = class {
+  constructor(len) {
+    this.quene = [];
+    this._maxLength = len;
+  }
+
+  put(el) {
+    this.quene.push(el);
+    if(this.quene.length > this._maxLength) {
+      return this.quene.shift();
+    }
+    return el;
+  }
+
+  get() {
+    return this.quene.shift();
+  }
+
+  get length() {
+    return this.quene.length;
+  }
+
+}

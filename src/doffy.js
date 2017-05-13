@@ -11,7 +11,9 @@
 const EventEmitter = require('events');
 const CDP = require('chrome-remote-interface');
 const actions = require('./actions');
+const events = require('./events');
 const util = require('./util');
+const Quene = util.Quene;
 const { ChromeLauncher } = require('lighthouse/lighthouse-cli/chrome-launcher');
 
 const defaultConfig = {
@@ -35,7 +37,10 @@ class Doffy extends EventEmitter {
     this.options = Object.assign(defaultConfig, options);
 
     // props
-    this.props = {};
+    this.props = {
+      pageLoaded: false,
+    };
+    this._request = new Quene(1000);
 
     // bind method
     util.bindMethods(['init', 'action', 'end'], this);
@@ -55,8 +60,8 @@ class Doffy extends EventEmitter {
         const { Network, Page, DOM, CSS } = client;
         self.client = client;
 
-        // setup handlers
-        setupHandlers.call(self);
+        // setup event handlers
+        setupEventHandlers.call(self);
 
         // setup client conf
         setupViewport.call(self);
@@ -73,6 +78,16 @@ class Doffy extends EventEmitter {
           self.action(name, fn);
         });
 
+        // Object.keys(events).forEach((name) => {
+        //   self[`on${events[name]}`] = function(cb) {
+        //     return new Promise((resolve, reject) => {
+        //       this.on(events[name], (data) => {
+        //         resolve(cb(data));
+        //       });
+        //     });
+        //   }
+        // });
+
         fulfill(self);
       }).on('error', (err) => {
         // cannot connect to the remote endpoint
@@ -82,12 +97,7 @@ class Doffy extends EventEmitter {
   }
 
   /**
-   * Static: Support attaching custom actions
-   *
-   * @param {String} name - method name
-   * @param {Function|Object} [childfn] - Electron implementation
-   * @param {Function|Object} parentfn - Nightmare implementation
-   * @return {Nightmare}
+   * add custom actions to Doffy
    */
   action(name, fn) {
     if(typeof fn === 'function') {
@@ -121,12 +131,18 @@ function launchChrome(headless = true) {
     ]
   });
 
+  process.on('exit', (code) => {
+    // console.log('exit process', code);
+    launcher.kill();
+  });
+
+  process.on('SIGINT', function(data) {
+    // console.log('Got SIGINT.  Press Control-D to exit.', data);
+    launcher.kill();
+  });
+
   return launcher.run().then(() => launcher)
-                 .catch((err) => {
-                   return launcher.kill().then(() => { // Kill Chrome if there's an error.
-                     throw err;
-                   }, console.error);
-                 });
+                 .catch(err => launcher.kill().then(() => { throw err; }, console.error));
 }
 
 async function setupViewport(opts) {
@@ -144,19 +160,17 @@ async function setupViewport(opts) {
   await Emulation.setVisibleSize({ width: deviceMetrics.width, height: deviceMetrics.height });  // not support on android!
 }
 
-// setup handlers
-function setupHandlers() {
+// setup Event Handlers
+function setupEventHandlers() {
   const { Network, Page } = this.client;
-  Network.requestWillBeSent(() => {
-    // console.log('======== requestWillBeSent ========\r\n', data.request.url);
-    // console.log('======== requestWillBeSent ========');
+  Network.requestWillBeSent((data) => {
+    this._request.put(data);
+    this.emit(events.pageLoaded, data);
   });
 
-  Page.loadEventFired((...params) => {
-    // console.log('======== loadEventFired ========\r\n', ...params);
-    // console.log('======== loadEventFired ========');
-    // Page.addScriptToEvaluateOnLoad
-    this.emit('pageLoaded', ...params);
+  Page.loadEventFired((data) => {
+    this.props.pageLoaded = true;
+    this.emit(events.pageLoaded, data);
   });
 
   Page.domContentEventFired(() => {
@@ -170,6 +184,7 @@ function setupHandlers() {
 
   Page.frameStartedLoading(() => {
     // console.log('======== frameStartedLoading  ========');
+    this.props.pageLoaded = false;
   });
 }
 

@@ -12,6 +12,10 @@
     "type": "git",
     "url": "https://github.com/qieguo2016/doffy.git"
   },
+  "author": {
+    "name": "qieguo",
+    "email": "qieguo.chow@gmail.com"
+  },
   "dependencies": {
     "chrome-remote-interface": "^0.22.0",
     "lighthouse": "^1.6.5"
@@ -20,7 +24,6 @@
     "babel-cli": "^6.18.0",
     "babel-core": "^6.20.0",
     "babel-eslint": "^7.2.2",
-    "babel-loader": "^6.2.8",
     "babel-polyfill": "^6.0.16",
     "babel-preset-env": "^1.1.4",
     "chai": "^1.9.1",
@@ -38,9 +41,6 @@
     "ui",
     "crawling"
   ],
-  "author": {
-    "name": "qieguo",
-    "email": "qieguo.chow@gmail.com"
-  },
+  "engines" : { "node" : ">=6" },
   "license": "MIT"
 }

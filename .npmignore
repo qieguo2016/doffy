@@ -1,3 +1,14 @@
 .idea
+.vscode
 .editorconfig
+
+.DS_Store
+npm-debug.log
+
+node_modules
 temp
+test
+results
+src
+
+example/ignore.js
