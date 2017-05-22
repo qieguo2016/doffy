@@ -4,6 +4,9 @@
  * @description :
  */
 
+const http = require('http');
+const url = require('url');
+
 exports.checkDoffy = function checkDoffy(doffy) {
   if(!doffy.client) {
     console.error('doffy is not ready, please call doffy.init() at first!');
@@ -52,4 +55,20 @@ exports.Quene = class {
     return this.quene.length;
   }
 
+}
+
+exports.httpGet = function(uri, options = { timeout: 1000 }) {
+  const target = url.parse(uri);
+  const opt = {
+    protocol: target.protocol,
+    host: target.host,
+    path: target.path,
+    auth: target.auth
+  };
+  return new Promise((resolve, reject) => {
+    const req = http.request(opt, (res) => {resolve(res)});
+    req.on('error', reject);
+    req.setTimeout(options.timeout, reject);
+    req.end();
+  });
 }

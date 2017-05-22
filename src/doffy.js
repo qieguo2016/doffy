@@ -26,7 +26,8 @@ const defaultConfig = {
   mobile: false,
   fitWindow: false,
   screenshotFormat: 'jpeg',
-  screenshotQuality: 60
+  screenshotQuality: 60,
+  pwd: './'
 };
 
 class Doffy extends EventEmitter {
@@ -46,7 +47,7 @@ class Doffy extends EventEmitter {
     util.bindMethods(['init', 'action', 'end'], this);
   }
 
-  init() {
+  async init() {
     // const options = this.options;
     const self = this;
     return new Promise(async(fulfill, reject) => {
@@ -105,7 +106,7 @@ class Doffy extends EventEmitter {
     }
   }
 
-  end(exit = false) {
+  async end(exit = false) {
     try {
       this.client.close();
       exit && this.chromeLauncher.kill('SIGHUP');

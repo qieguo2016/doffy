@@ -406,3 +406,25 @@ exports.getResponse = function(query) {
   });
 };
 
+exports.download = async function(selector, fileName, opt = { url: false }) {
+  checkDoffy(this);
+  let target = selector;
+  if(!opt.url) {
+    target = await this.evaluate((selector) => {
+      const el = document.querySelector(selector);
+      return el && el.src;
+    }, selector);
+  }
+  if(!target) {
+    Promise.reject(new Error(`can not find src of ${selector}`));
+  }
+  try {
+    let writeStream = fs.createWriteStream(path.join(this.pwd, fileName));
+    let req = util.httpGet(target);
+    req.on('end', Promise.resolve);
+    req.pipe(writeStream);
+  } catch(err) {
+    Promise.reject(err);
+  }
+}
+
