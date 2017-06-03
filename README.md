@@ -109,7 +109,7 @@ describe('test example', function() {
 
 ## API
 
-see wiki page => [API doc]()
+see wiki page => [API doc]()  please wait...
 
 ## ChangeLog
 
