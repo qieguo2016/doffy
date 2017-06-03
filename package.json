@@ -1,6 +1,6 @@
 {
   "name": "doffy",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "a headless browser automation library with easy-use API",
   "main": "doffy",
   "scripts": {
